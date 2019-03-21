@@ -25,7 +25,7 @@ namespace supai
             string strToken = "";
             string strFYid = "";
             Post post=new Post();
-            string strJson=post.GetJson();
+            string strJson=post.GetJson(); 
             jsonTool jsonTool = new jsonTool();
             string error = "";
             List<FYModel> fyModel = jsonTool.GLJsonOutData(strJson,out error);
