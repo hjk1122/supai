@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using supai.model;
 using supai.tool;
 
 namespace supai.class1
@@ -134,30 +135,33 @@ namespace supai.class1
         /// 获取excel文件的json数据
         /// </summary>
         /// <returns></returns>
-        public string GetJson()
+        public List<FYModel> GetFYData()
         {
             string result = "";
             npoi npoi=new npoi();
             Post post = new Post();
             string strToken = "";
-
+            int pageNum = 100;  //页大小
+            List<FYModel> fyModel=new List<FYModel>();
             StringBuilder strjson =new StringBuilder();
-            string filePath = AppDomain.CurrentDomain.BaseDirectory + "FTJ388.xls";
+            string filePath = AppDomain.CurrentDomain.BaseDirectory + "速派运单.xls";
             List<string> listDH = npoi.GetDH(filePath);
-            if (listDH.Count > 100)
+            if (listDH.Count > pageNum)
             {
                 int count = listDH.Count;
-                //int pagecount = count / 100;
+                int pagecount = count / 100;  //总页数
+                int pageNow = 0;  //当前页数
                 //int ys = count % 100;
                 strToken = post.GetToken();
+                //int pageCount = 0; //已经计算完的单数
                 TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
                 strjson.Append("{\"original_no\":[");
-                for (int i = 0; i <= count; i++)
+                for (int i = 0; i < count; i++)
                 {
                     if (listDH[i].Trim() != "")
                     {
                         strjson.AppendFormat("{0}{1}{2}", "\"", listDH[i], "\",");
-                        if (i % 100 == 0)
+                        if ((i+1) % pageNum == 0)
                         {
                             //string str=strjson.ToString();
                             //str.Substring(0, str.Length - 2);
@@ -166,7 +170,7 @@ namespace supai.class1
                             strjson.Remove(strjson.Length - 1, 1);
                             strjson.Append(@"]}");
                             string token = GetNewToken(ts);
-                            if (token != "1")
+                            if (token != "1") //重新新建了token
                             {
                                 strToken = token;
                                 ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
@@ -175,27 +179,61 @@ namespace supai.class1
                             if (strToken.Substring(0, 5) != "error")
                             {
                                 result = post.GetFYJson(strToken, strjson.ToString());
+                                fyModel = this.AddFyModel(result, fyModel);
                             }
                             strjson.Clear();
                             strjson.Append("{\"original_no\":[");
+                            pageNow = pageNow + 1;
                         }
-                        //最后数量大于100的最后一个关联单
-                        else if ((i / 100 == 0) && (listDH[i + 1].Trim()==""))
+                        //当单号等于整数页数
+                        if (pageNow==pagecount)
                         {
-                            strjson.Remove(strjson.Length - 1, 1);
-                            strjson.Append(@"]}");
-                            string token = GetNewToken(ts);
-                            if (token != "1")
+                            //不是最后一条记录
+                            if (i < (count-1))
                             {
-                                strToken = token;
-                                ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                                if ((listDH[i + 1].Trim() == ""))
+                                {
+                                    strjson.Remove(strjson.Length - 1, 1);
+                                    strjson.Append(@"]}");
+                                    string token = GetNewToken(ts);
+                                    if (token != "1")
+                                    {
+                                        strToken = token;
+                                        ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                                    }
+
+                                    //strToken = post.GetToken();
+                                    if (strToken.Substring(0, 5) != "error")
+                                    {
+                                        result = post.GetFYJson(strToken, strjson.ToString());
+                                        fyModel = this.AddFyModel(result, fyModel);
+                                    }
+
+                                    break;
+                                }
                             }
-                            //strToken = post.GetToken();
-                            if (strToken.Substring(0, 5) != "error")
+                            //是最后一条记录
+                            else
                             {
-                                result = post.GetFYJson(strToken, strjson.ToString());
+                                strjson.Remove(strjson.Length - 1, 1);
+                                strjson.Append(@"]}");
+                                string token = GetNewToken(ts);
+                                if (token != "1")
+                                {
+                                    strToken = token;
+                                    ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                                }
+
+                                //strToken = post.GetToken();
+                                if (strToken.Substring(0, 5) != "error")
+                                {
+                                    result = post.GetFYJson(strToken, strjson.ToString());
+                                    fyModel = this.AddFyModel(result, fyModel);
+
+                                }
+
+                                break;
                             }
-                            break;
                         }
                     }
                 }
@@ -213,13 +251,15 @@ namespace supai.class1
                     {
                         strjson.AppendFormat("{0}{1}{2}", "\"", listDH[i], "\",");
 
-                        if ((i / 100 == 0) && (listDH[i + 1].Trim() == ""))
+                        if ((i / pageNum == 0) && (listDH[i + 1].Trim() == ""))
                         {
                             strjson.Remove(strjson.Length - 1, 1);
                             strjson.Append(@"]}");
                             if (strToken.Substring(0, 5) != "error")
                             {
                                 result = post.GetFYJson(strToken, strjson.ToString());
+                                fyModel = this.AddFyModel(result, fyModel);
+
                             }
 
                             break;
@@ -229,7 +269,7 @@ namespace supai.class1
                 }
             }
 
-            return result;
+            return fyModel;
             //strjson.Append("{\"original_no\":[");
 
         }
@@ -249,6 +289,21 @@ namespace supai.class1
                 result = post.GetToken();
             }
             return result;
+        }
+
+        private List<FYModel> AddFyModel(string strjson, List<FYModel> fyModel)
+        {
+            string error = "";
+            List<FYModel> fyModel1 = fyModel;
+            jsonTool jsonTool = new jsonTool();
+            List<FYModel> fyModelNew = jsonTool.GLJsonOutData(strjson, out error);
+            if (error == "")
+            {
+                fyModel1.AddRange(fyModelNew);
+            }
+
+            return fyModel1;
+
         }
     }
 }

@@ -24,21 +24,20 @@ namespace supai
         {
             string strToken = "";
             string strFYid = "";
-            Post post=new Post();
-            string strJson=post.GetJson(); 
-            jsonTool jsonTool = new jsonTool();
-            string error = "";
-            List<FYModel> fyModel = jsonTool.GLJsonOutData(strJson,out error);
-            if(error=="")
+            Post post = new Post();
+            //string strJson=post.GetFYData(); 
+            //jsonTool jsonTool = new jsonTool();
+            //string error = "";
+            //List<FYModel> fyModel = jsonTool.GLJsonOutData(strJson,out error);
+            List<FYModel> fyModel = post.GetFYData();
+            string filePath = AppDomain.CurrentDomain.BaseDirectory + "转运单号.xls";
+            npoi npoi = new npoi();
+            string result = npoi.WriteFile(filePath, fyModel);
+            if (result == "1")
             {
-                string filePath = AppDomain.CurrentDomain.BaseDirectory + "OutFTJ388.xls";
-                npoi npoi = new npoi();
-                string result = npoi.WriteFile(filePath, fyModel);
-                if(result=="1")
-                {
-                    MessageBox.Show("输出成功", "信息", MessageBoxButtons.OK);
-                }
+                MessageBox.Show("输出成功", "信息", MessageBoxButtons.OK);
             }
+
 
             //strToken = post.GetToken();
             //if(strToken.Substring(0,5)!="error")
