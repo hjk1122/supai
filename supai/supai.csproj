@@ -74,12 +74,16 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="model\modelYD\Goods.cs" />
+    <Compile Include="model\modelYD\GoodsList.cs" />
+    <Compile Include="model\modelYD\YunDan.cs" />
     <Compile Include="model\data.cs" />
     <Compile Include="model\FYModel.cs" />
     <Compile Include="model\token.cs" />
     <Compile Include="model\GuanlianIn.cs" />
     <Compile Include="model\GuanlianOut.cs" />
     <Compile Include="model\TokenResult.cs" />
+    <Compile Include="model\modelYD\YDModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="tool\jsonHelper.cs" />
